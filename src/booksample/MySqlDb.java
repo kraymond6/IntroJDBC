@@ -7,6 +7,7 @@ package booksample;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -66,13 +67,23 @@ public class MySqlDb {
         int updateCount = stmt.executeUpdate(sql);
     }
     
+    public void deleteSingleRecordPS(String tableName, String fieldName, Object pkValue) throws Exception{
+        String sql = "";
+        sql = "DELETE FROM ? WHERE ? =?";
+        
+        PreparedStatement stmt = conn.prepareStatement(sql);
+        stmt.setString(1, tableName);
+        stmt.setString(2, fieldName);
+        stmt.setObject(3, pkValue);
+        int updateCount = stmt.executeUpdate();
+    }
     //testing purposes only, normally do in another class
     public static void main(String[] args) throws Exception{
         MySqlDb db = new MySqlDb();
         db.openConnection("com.mysql.jdbc.Driver",
                 "jdbc:mysql://localhost:3306/book",
                 "root", "admin");
-        db.deleteSingleRecord("author", "author_id", 2);
+        //db.deleteSingleRecord("author", "author_id", 3);
         List<Map<String,Object>> records = db.findAllRecords("author");
         for(Map record : records) {
             System.out.println(record);
