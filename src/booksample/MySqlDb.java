@@ -75,7 +75,7 @@ public class MySqlDb {
         stmt.setString(1, tableName);
         stmt.setString(2, fieldName);
         stmt.setString(3, pkValue.toString());
-        int updateCount = stmt.executeUpdate();
+        int updateCount = stmt.executeUpdate(sql); //don't need the int variable, all you NEED is stmt.executeUpdate(sql)
     }
     //testing purposes only, normally do this in another class
     public static void main(String[] args) throws Exception{
