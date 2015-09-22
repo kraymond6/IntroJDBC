@@ -59,9 +59,9 @@ public class MySqlDb {
         //check for string, use proper where statement
         String sql = "";
         if (pkValue instanceof String){
-           sql = "DELETE FROM " + tableName + " WHERE " +  fieldName + " = '" + pkValue +"'"; 
+           sql = "DELETE FROM " + tableName + " WHERE " +  fieldName + " = '" + pkValue.toString() +"'"; 
         }else {
-        sql = "DELETE FROM " + tableName + " WHERE " +  fieldName + " = " + pkValue;
+        sql = "DELETE FROM " + tableName + " WHERE " +  fieldName + " = " + pkValue.toString();
         }
         Statement stmt = conn.createStatement();
         int updateCount = stmt.executeUpdate(sql);
@@ -74,10 +74,10 @@ public class MySqlDb {
         PreparedStatement stmt = conn.prepareStatement(sql);
         stmt.setString(1, tableName);
         stmt.setString(2, fieldName);
-        stmt.setObject(3, pkValue);
+        stmt.setString(3, pkValue.toString());
         int updateCount = stmt.executeUpdate();
     }
-    //testing purposes only, normally do in another class
+    //testing purposes only, normally do this in another class
     public static void main(String[] args) throws Exception{
         MySqlDb db = new MySqlDb();
         db.openConnection("com.mysql.jdbc.Driver",
