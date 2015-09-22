@@ -234,22 +234,9 @@ public class DB_Generic implements DBAccessor {
 			final Iterator i=colValues.iterator();
 			int index = 1;
 			while( i.hasNext() ) {
-				final Object obj=i.next();
-				if(obj instanceof String){
-					pstmt.setString( index++,(String)obj );
-				} else if(obj instanceof Integer ){
-					pstmt.setInt( index++,((Integer)obj).intValue() );
-				} else if(obj instanceof Long ){
-					pstmt.setLong( index++,((Long)obj).longValue() );
-				} else if(obj instanceof Double ){
-					pstmt.setDouble( index++,((Double)obj).doubleValue() );
-				} else if(obj instanceof java.sql.Date ){
-					pstmt.setDate(index++, (java.sql.Date)obj );
-				} else if(obj instanceof Boolean ){
-					pstmt.setBoolean(index++, ((Boolean)obj).booleanValue() );
-				} else {
-					if(obj != null) pstmt.setObject(index++, obj);
-				}
+				final Object obj=i.next();				 
+                                pstmt.setObject(index++, obj);
+
 			}
 			recsUpdated = pstmt.executeUpdate();
 

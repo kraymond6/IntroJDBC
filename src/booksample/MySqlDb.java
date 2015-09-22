@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -69,14 +70,50 @@ public class MySqlDb {
     
     public void deleteSingleRecordPS(String tableName, String fieldName, Object pkValue) throws Exception{
         String sql = "";
-        sql = "DELETE FROM ? WHERE ? =?";
+        sql = "DELETE FROM " + tableName + " WHERE " + fieldName + " =?";
         
         PreparedStatement stmt = conn.prepareStatement(sql);
-        stmt.setString(1, tableName);
-        stmt.setString(2, fieldName);
-        stmt.setString(3, pkValue.toString());
+        stmt.setObject(1, pkValue);
         int updateCount = stmt.executeUpdate(sql); //don't need the int variable, all you NEED is stmt.executeUpdate(sql)
     }
+    
+    public int insertRecord(String tableName, List colDescriptors, List colValues) throws Exception{
+        
+        int recordsUpdated;
+        PreparedStatement pstmt = null;
+        try{
+        pstmt = buildInsertStmt(conn,tableName,colDescriptors);
+        
+        final Iterator i=colValues.iterator();
+        int index = 1;
+        while(i.hasNext()){
+            Object obj=i.next();
+            pstmt.setObject(index++, obj);
+        }
+        recordsUpdated = pstmt.executeUpdate();
+        } catch (SQLException sqle) {
+			throw sqle;
+		} catch (Exception e) {
+			throw e;
+		}
+        return recordsUpdated;
+    }
+    
+    private PreparedStatement buildInsertStmt (Connection conn, String tableName, List colDescriptors) throws Exception{
+        //INSERT INTO table_name (col1, col2) VALUES (val1, val2)
+        StringBuffer sql = new StringBuffer("INSERT INTO ");
+        (sql.append(tableName)).append(" (");
+        final Iterator i=colDescriptors.iterator();
+        while(i.hasNext()){
+            (sql.append((String)i.next())).append(", ");
+        }
+        sql = new StringBuffer( (sql.toString()).substring(0, (sql.toString()).lastIndexOf(", ") ) + ") VALUES (" );
+        for(int x=0; x<colDescriptors.size(); x++){
+            sql.append("?, ");
+        }
+        String sqlStmt = (sql.toString()).substring(0,(sql.toString()).lastIndexOf(", ")) + ")";
+        return conn.prepareStatement(sqlStmt);
+    }     
     //testing purposes only, normally do this in another class
     public static void main(String[] args) throws Exception{
         MySqlDb db = new MySqlDb();
@@ -84,6 +121,19 @@ public class MySqlDb {
                 "jdbc:mysql://localhost:3306/book",
                 "root", "admin");
         //db.deleteSingleRecord("author", "author_id", 3);
+        
+        //INSERT INTO table_name (col1, col2) VALUES (val1, val2)
+//        List colDesc = new ArrayList<>();
+//        colDesc.add("author_id");
+//        colDesc.add("author_name");
+//        colDesc.add("date_created");
+//        
+//        List colValues = new ArrayList<>();
+//        colValues.add(null);
+//        colValues.add("JRR Tolkien");
+//        colValues.add("2015-09-21");
+//        
+//        db.insertRecord("book.author", colDesc, colValues);
         List<Map<String,Object>> records = db.findAllRecords("author");
         for(Map record : records) {
             System.out.println(record);
