@@ -296,24 +296,24 @@ public class DB_Generic implements DBAccessor {
 
 			while( i.hasNext() || doWhereValueFlag) {
 				if(!doWhereValueFlag){ obj = i.next();}
-
-				if(obj instanceof String){
-					pstmt.setString( index++,(String)obj );
-				} else if(obj instanceof Integer ){
-					pstmt.setInt( index++,((Integer)obj).intValue() );
-				} else if(obj instanceof Long ){
-					pstmt.setLong( index++,((Long)obj).longValue() );
-				} else if(obj instanceof Double ){
-					pstmt.setDouble( index++,((Double)obj).doubleValue() );
-				} else if(obj instanceof java.sql.Timestamp ){
-					pstmt.setTimestamp(index++, (java.sql.Timestamp)obj );
-				} else if(obj instanceof java.sql.Date ){
-					pstmt.setDate(index++, (java.sql.Date)obj );
-				} else if(obj instanceof Boolean ){
-					pstmt.setBoolean(index++, ((Boolean)obj).booleanValue() );
-				} else {
+//
+//				if(obj instanceof String){
+//					pstmt.setString( index++,(String)obj );
+//				} else if(obj instanceof Integer ){
+//					pstmt.setInt( index++,((Integer)obj).intValue() );
+//				} else if(obj instanceof Long ){
+//					pstmt.setLong( index++,((Long)obj).longValue() );
+//				} else if(obj instanceof Double ){
+//					pstmt.setDouble( index++,((Double)obj).doubleValue() );
+//				} else if(obj instanceof java.sql.Timestamp ){
+//					pstmt.setTimestamp(index++, (java.sql.Timestamp)obj );
+//				} else if(obj instanceof java.sql.Date ){
+//					pstmt.setDate(index++, (java.sql.Date)obj );
+//				} else if(obj instanceof Boolean ){
+//					pstmt.setBoolean(index++, ((Boolean)obj).booleanValue() );
+//				} else {
 					if(obj != null) pstmt.setObject(index++, obj);
-				}
+//				}
 
 				if(doWhereValueFlag){ break;} // only allow loop to continue one time
 				if(!i.hasNext() ) {          // continue loop for whereValue

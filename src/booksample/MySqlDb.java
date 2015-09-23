@@ -23,31 +23,32 @@ import java.util.Map;
  * @author Kallie
  */
 public class MySqlDb {
+
     private Connection conn;
-    
-    public void openConnection(String driverClass, String url, 
-            String userName, String password) throws Exception{
-        Class.forName (driverClass);
-			  conn = DriverManager.getConnection(url, userName, password);
+
+    public void openConnection(String driverClass, String url,
+            String userName, String password) throws Exception {
+        Class.forName(driverClass);
+        conn = DriverManager.getConnection(url, userName, password);
     }
-    
-    public void closeConnection() throws SQLException{
+
+    public void closeConnection() throws SQLException {
         conn.close();
     }
-    
+
     //column names are strings, the values are a ? so we make them generic objects
-    public List<Map<String,Object>> findAllRecords(String tableName) throws Exception{
-        List<Map<String,Object>> records = new ArrayList<>();
+    public List<Map<String, Object>> findAllRecords(String tableName) throws Exception {
+        List<Map<String, Object>> records = new ArrayList<>();
         String sql = "SELECT * FROM " + tableName;
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery(sql);
-        ResultSetMetaData metaData= rs.getMetaData();
+        ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
-        
-        while(rs.next()){
+
+        while (rs.next()) {
             //goes through each record
-            Map<String,Object> record = new HashMap<>();
-            for(int i=1; i <= columnCount; i++){
+            Map<String, Object> record = new HashMap<>();
+            for (int i = 1; i <= columnCount; i++) {
                 //goes through each column
                 record.put(metaData.getColumnName(i), rs.getObject(i));
             }
@@ -55,65 +56,118 @@ public class MySqlDb {
         }
         return records;
     }
-    
-    public void deleteSingleRecord(String tableName, String fieldName, Object pkValue) throws Exception{
+
+    public void deleteSingleRecord(String tableName, String fieldName, Object pkValue) throws Exception {
         //check for string, use proper where statement
         String sql = "";
-        if (pkValue instanceof String){
-           sql = "DELETE FROM " + tableName + " WHERE " +  fieldName + " = '" + pkValue.toString() +"'"; 
-        }else {
-        sql = "DELETE FROM " + tableName + " WHERE " +  fieldName + " = " + pkValue.toString();
+        if (pkValue instanceof String) {
+            sql = "DELETE FROM " + tableName + " WHERE " + fieldName + " = '" + pkValue.toString() + "'";
+        } else {
+            sql = "DELETE FROM " + tableName + " WHERE " + fieldName + " = " + pkValue.toString();
         }
         Statement stmt = conn.createStatement();
         int updateCount = stmt.executeUpdate(sql);
     }
-    
-    public void deleteSingleRecordPS(String tableName, String fieldName, Object pkValue) throws Exception{
+
+    public void deleteSingleRecordPS(String tableName, String fieldName, Object pkValue) throws Exception {
         String sql = "";
         sql = "DELETE FROM " + tableName + " WHERE " + fieldName + " =?";
-        
+
         PreparedStatement stmt = conn.prepareStatement(sql);
         stmt.setObject(1, pkValue);
         int updateCount = stmt.executeUpdate(sql); //don't need the int variable, all you NEED is stmt.executeUpdate(sql)
     }
-    
-    public int insertRecord(String tableName, List colDescriptors, List colValues) throws Exception{
-        
+
+    public int insertRecord(String tableName, List colDescriptors, List colValues) throws Exception {
+
         int recordsUpdated;
         PreparedStatement pstmt = null;
-        try{
-        pstmt = buildInsertStmt(conn,tableName,colDescriptors);
-        
-        final Iterator i=colValues.iterator();
-        int index = 1;
-        while(i.hasNext()){
-            Object obj=i.next();
-            pstmt.setObject(index++, obj);
-        }
-        recordsUpdated = pstmt.executeUpdate();
+        try {
+            pstmt = buildInsertStmt(conn, tableName, colDescriptors);
+
+            final Iterator i = colValues.iterator();
+            int index = 1;
+            while (i.hasNext()) {
+                Object obj = i.next();
+                pstmt.setObject(index++, obj);
+            }
+            recordsUpdated = pstmt.executeUpdate();
         } catch (SQLException sqle) {
-			throw sqle;
-		} catch (Exception e) {
-			throw e;
-		}
+            throw sqle;
+        } catch (Exception e) {
+            throw e;
+        }
         return recordsUpdated;
     }
-    
-    private PreparedStatement buildInsertStmt (Connection conn, String tableName, List colDescriptors) throws Exception{
+
+    private PreparedStatement buildInsertStmt(Connection conn, String tableName, List colDescriptors) throws Exception {
         //INSERT INTO table_name (col1, col2) VALUES (val1, val2)
         StringBuffer sql = new StringBuffer("INSERT INTO ");
         (sql.append(tableName)).append(" (");
-        final Iterator i=colDescriptors.iterator();
-        while(i.hasNext()){
-            (sql.append((String)i.next())).append(", ");
+        final Iterator i = colDescriptors.iterator();
+        while (i.hasNext()) {
+            (sql.append((String) i.next())).append(", ");
         }
-        sql = new StringBuffer( (sql.toString()).substring(0, (sql.toString()).lastIndexOf(", ") ) + ") VALUES (" );
-        for(int x=0; x<colDescriptors.size(); x++){
+        sql = new StringBuffer((sql.toString()).substring(0, (sql.toString()).lastIndexOf(", ")) + ") VALUES (");
+        for (Object colDescriptor : colDescriptors) {
             sql.append("?, ");
         }
-        String sqlStmt = (sql.toString()).substring(0,(sql.toString()).lastIndexOf(", ")) + ")";
+        String sqlStmt = (sql.toString()).substring(0, (sql.toString()).lastIndexOf(", ")) + ")";
         return conn.prepareStatement(sqlStmt);
-    }     
+    }
+
+    public int updateRecord(String tableName, List colDesc, List colValues, String whereField, Object whereValue) throws Exception {
+        PreparedStatement pstmt = null;
+        int recordsUpdated = 0;
+
+        try {
+            pstmt = buildUpdateStmt(conn, tableName, colDesc, whereField);
+
+            final Iterator x = colValues.iterator();
+            int index = 1;
+            boolean whereFlag = false;
+            Object obj = null;
+            while (x.hasNext() || whereFlag) {
+                if (!whereFlag) {
+                    obj = x.next();
+                }
+                if (obj != null) {
+                    pstmt.setObject(index++, obj);
+                }
+                if (whereFlag) {
+                    break;
+                }
+                if(!x.hasNext()){
+                    whereFlag = true;
+                    obj = whereValue;
+            }
+                recordsUpdated = pstmt.executeUpdate();
+        }
+    } catch(Exception e){
+        throw e;
+    } finally {
+            try{
+            pstmt.close();
+            } catch(SQLException ex){
+                throw ex;
+            }
+        }
+        return recordsUpdated;
+}
+
+private PreparedStatement buildUpdateStmt(Connection conn, String tableName, List colDescriptors, String whereField) throws Exception{
+        StringBuffer stmt = new StringBuffer("UPDATE ");
+        (stmt.append(tableName)).append(" SET ");
+        final Iterator x=colDescriptors.iterator();
+        while(x.hasNext()){
+            (stmt.append((String)x.next())).append(" = ?, ");
+        }
+        stmt = new StringBuffer((stmt.toString()).substring(0,(stmt.toString()).lastIndexOf(", ")));
+        ((stmt.append(" WHERE ")).append(whereField)).append(" =?");
+        String statement = stmt.toString();
+        return conn.prepareStatement(statement);
+    }
+   
     //testing purposes only, normally do this in another class
     public static void main(String[] args) throws Exception{
         MySqlDb db = new MySqlDb();
@@ -130,8 +184,8 @@ public class MySqlDb {
 //        
 //        List colValues = new ArrayList<>();
 //        colValues.add(null);
-//        colValues.add("JRR Tolkien");
-//        colValues.add("2015-09-21");
+//        colValues.add("Shel Silverstein");
+//        colValues.add("2015-09-23");
 //        
 //        db.insertRecord("book.author", colDesc, colValues);
         List<Map<String,Object>> records = db.findAllRecords("author");
